@@ -1,4 +1,5 @@
 #define NUM_LEDS 12
+#define DELAY 35
 
 #define A 2
 #define B 3
@@ -38,11 +39,11 @@ void loop() {
   for(int i = 1; i < NUM_LEDS; ++i) {
     setup();
     ledOn(i);
-    delay(40);
+    delay(DELAY);
   }
   for(int i = NUM_LEDS - 2; i >= 0; --i) {
     setup();
     ledOn(i);
-    delay(40);
+    delay(DELAY);
   }
 }
