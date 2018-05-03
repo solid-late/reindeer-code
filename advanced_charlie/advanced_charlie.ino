@@ -1,7 +1,6 @@
 #define NUM_LEDS 12
-#define PATTERN_LENGTH 4
+#define PATTERN_LENGTH 5
 #define DELAY 1
-#define ITERS 10
 
 #define A 2
 #define B 3
@@ -24,17 +23,48 @@ const int LED_MAP[NUM_LEDS][2] = {
 };
 
 const int PATTERN[PATTERN_LENGTH] = {
-    0xffff,
+    0b111111111111,
     0b000010010000,
     0b000010000000,
-    0x0000
+    0x000000000000,
+    0b000010010000
 };
 
-void setup() {
+int patternIndex = 0;
+
+void setUpTimer() {
+  cli();
+
+  //set timer1 interrupt at 1Hz
+  TCCR1A = 0;// set entire TCCR1A register to 0
+  TCCR1B = 0;// same for TCCR1B
+  TCNT1  = 0;//initialize counter value to 0
+  // set compare match register for 1hz increments
+  OCR1A = 2000;//15624;// = (16*10^6) / (1*1024) - 1 (must be <65536)
+  // turn on CTC mode
+  TCCR1B |= (1 << WGM12);
+  // Set CS10 and CS12 bits for 1024 prescaler
+  TCCR1B |= (1 << CS12) | (1 << CS10);  
+  // enable timer compare interrupt
+  TIMSK1 |= (1 << OCIE1A);
+  
+  sei();
+}
+
+ISR(TIMER1_COMPA_vect){
+  patternIndex = (patternIndex + 1) % PATTERN_LENGTH;
+}
+
+void resetPins() {
   pinMode(A, INPUT);
   pinMode(B, INPUT);
   pinMode(C, INPUT);
   pinMode(D, INPUT);
+}
+
+void setup() {
+  resetPins();
+  setUpTimer();
 }
 
 void ledOn(int index) {
@@ -45,17 +75,11 @@ void ledOn(int index) {
 }
 
 void loop() {
-  for (int pi = 0; pi < PATTERN_LENGTH; ++pi) {
-    for (int i = 0; i < ITERS; ++i) {
-      for (int ii = 0; ii < NUM_LEDS; ++ii) {
-        setup();
-        if ((1 << ii) & PATTERN[pi]) {
-          ledOn(ii);
-          delay(DELAY);
-        } else {
-          delay(DELAY);
-        }
-      }
+  for (int ledi = 0; ledi < NUM_LEDS; ++ledi) {
+    resetPins();
+    if ((1 << ledi) & PATTERN[patternIndex]) {
+      ledOn(ledi);
+      delay(DELAY);
     }
   }
 }
