@@ -1,17 +1,18 @@
+//#define PRINT
 #define NUM_LEDS 16
-#define PATTERN_LENGTH 6
+#define PATTERN_LENGTH 32
 #define DELAY 1
 #define MAXPWM 255
 #define THRESHOLD 300
 
 #define SENSORPIN A0
 #define FUCKEDUP_SERVOPIN 6
-#define SERVOPIN 10
+#define SERVOPIN 6
 #define A 2
 #define B 3
 #define C 4
-#define D 5
-#define E 6
+#define D A1
+#define E A2
 
 const int LED_MAP[NUM_LEDS][2] = {
   /*  0 */  {D, A},
@@ -33,12 +34,38 @@ const int LED_MAP[NUM_LEDS][2] = {
 };
 
 const int PATTERN[PATTERN_LENGTH] = {
-    0b1111111111111111,
-    0b0000100100000100,
-    0b0000100000000000,
-    0b0000000000000000,
-    0b0000100000000000,
-    0b0000100100000100
+  0b1000010000100101,
+  0b0010100000000000,
+  0b0000001001000000,
+  0b0000000001000000,
+  0b1000000001000000,
+  0b0001000010010000,
+  0b0000100001001000,
+  0b0000000000100000,
+  0b0001100000001010,
+  0b0001000000000001,
+  0b0000101000000000,
+  0b0000100100000100,
+  0b0000100000100000,
+  0b0100000000001000,
+  0b0000100000010000,
+  0b0000100100000100,
+  0b1000000000000000,
+  0b0010100000000000,
+  0b0000001001000000,
+  0b0000000001000000,
+  0b0000000001000000,
+  0b0000001010010000,
+  0b0000000001001000,
+  0b0010000100100000,
+  0b0000000000001010,
+  0b0001001000000001,
+  0b0000101000000000,
+  0b0000100101000100,
+  0b0000100000100000,
+  0b0100000000101000,
+  0b0000100000010000,
+  0b0110100101000100
 };
 
 int patternIndex = 0;
@@ -146,6 +173,15 @@ void setup() {
   setUpTimer();
   pinMode(SERVOPIN, OUTPUT);
   setPwmFrequency(SERVOPIN, 256);
+
+  analogWrite(SERVOPIN, MAXPWM / 2);
+  
+#ifdef PRINT
+  Serial.begin(9600);
+#endif
+  
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);
 }
 
 void ledOn(int index) {
@@ -156,21 +192,27 @@ void ledOn(int index) {
 }
 
 void turnHead(bool newEnabled) {
-  const int pwmVal = newEnabled ?
-    MAXPWM * 1/4 + MAXPWM * 1/6 :
-    MAXPWM * 3/4 - MAXPWM * 1/6;
-  analogWrite(SERVOPIN, pwmVal);
-  delay(DELAY * 100);
+  const int offs = MAXPWM / 6;
+  if (newEnabled) {
+    analogWrite(SERVOPIN, MAXPWM * 1 / 4 + offs);
+  } else {
+    analogWrite(SERVOPIN, MAXPWM * 3 / 4 - offs);
+  }
+  delay(500); // 2s
 }
 
 void loop() {
   int iter = 0;
   bool enabled = true;
   if (iter++ % 200 == 0) {
-    const bool newEnabled = analogRead(SENSORPIN) > THRESHOLD;
-//    if (enabled != newEnabled) {
-//      turnHead(newEnabled);
-//    }
+    const int readVal = analogRead(SENSORPIN);
+#ifdef PRINT
+    Serial.println(readVal);
+#endif
+    const bool newEnabled = readVal > THRESHOLD;
+    if (enabled != newEnabled) {
+      turnHead(newEnabled);
+    }
     enabled = newEnabled;
   }
   if (!enabled) {
