@@ -4,6 +4,7 @@
 #define DELAY 1
 #define MAXPWM 255
 #define THRESHOLD 300
+#define PATTERN_RANDOM 1
 
 #define SENSORPIN A0
 #define FUCKEDUP_SERVOPIN 6
@@ -218,6 +219,15 @@ void loop() {
   if (!enabled) {
     return;  
   }
+
+if (PATTERN_RANDOM) {
+  int numledson = random(NUM_LEDS);
+  for (int i = 0; i < numledson; ++i) {
+    ledOn(random(NUM_LEDS));
+    delay(DELAY*150);
+  }
+}
+else {
   for (int ledi = 0; ledi < NUM_LEDS; ++ledi) {
     resetPins();
     if ((1 << ledi) & PATTERN[patternIndex]) {
@@ -225,5 +235,6 @@ void loop() {
       delay(DELAY);
     }
   }
+}
 }
 
